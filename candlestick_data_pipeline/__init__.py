@@ -1,11 +1,11 @@
 import json
 import glob
 from pathlib import Path
-from candlestick_data_pipeline_local import data_io
-from candlestick_data_pipeline_local import transformations
-from candlestick_data_pipeline_local import visualizations
-from candlestick_data_pipeline_local import evaluations
-from candlestick_data_pipeline_local import pipeline_logging
+import data_io
+import transformations
+import visualizations
+import evaluations
+import pipeline_logging
 
 
 class PipelineManager:
