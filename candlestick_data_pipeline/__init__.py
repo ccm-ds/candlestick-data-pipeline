@@ -6,6 +6,7 @@ from candlestick_data_pipeline import transformations
 from candlestick_data_pipeline import visualizations
 from candlestick_data_pipeline import evaluations
 from candlestick_data_pipeline import pipeline_logging
+from candlestick_data_pipeline import registration
 
 
 class PipelineManager:
@@ -144,6 +145,7 @@ class PipelineManager:
         data_io.write_data_by_file_extension(data=self.data, file_path=staging_data_path)
 
     def visualize_staging_dataset(self, load_control_key, dataset_type):
+        print(f'\n\nCreating Visualizations for {dataset_type} dataset....\nload_control_key={load_control_key}')
         staging_data_path = Path(
             self.version_path / f"datasets/staging_datasets/{self.name}_v{self.version}_{dataset_type}_data_{load_control_key}.csv")
         vis_data = data_io.read_data_by_file_extension(staging_data_path).compute()
