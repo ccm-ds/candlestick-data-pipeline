@@ -197,15 +197,9 @@ def fill_missing_dates(data: dd = None, date_column: str = None, fill_method: st
     Preform date fill on single group
     """
     all_dates = pd.date_range(date_range[0], date_range[1])
-
-    # print('in')
-    print(data.head())
     metric_data = data[[col for col in data.columns if col not in groupby_columns]]
     data = data[groupby_columns].reindex(all_dates, method='nearest')
     metric_data = metric_data.reindex(all_dates, method=fill_method, fill_value=fill_value)
     data = dd.merge(data, metric_data, left_index=True, right_index=True)
-    # print('out')
-    print(data.head())
     data = data.reset_index().rename(columns={'index': date_column})[columns]
-    print(data.head())
     return data
