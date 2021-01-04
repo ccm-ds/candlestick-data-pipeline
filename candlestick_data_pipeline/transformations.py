@@ -195,6 +195,6 @@ def fill_missing_dates(data: dd = None, date_column: str = None, fill_method: st
     Preform date fill on single group
     """
     all_dates = pd.date_range(date_range[0], date_range[1])
-    data = data.set_index(date_column).reindex(all_dates, method=fill_method, fill_value=fill_value)
+    data = data.set_index(date_column).reindex(all_dates, fill_value=fill_value)
     data = data.reset_index().rename(columns={'index': date_column})
     return data
