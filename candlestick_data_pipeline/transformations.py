@@ -102,6 +102,40 @@ def rolling_mean_by_date(data: dd = None, metric_columns: List[str] = None, wind
         data[output_column_name] = data[metric_column].rolling(window=window, min_periods=0).mean().astype('float32')
     return data
 
+def rolling_sum_by_date_by_group(data: dd = None, groupby_columns: List[str] = None, metric_columns: List[str] = None,
+                                  date_column: str = None, window: int = None) -> dd:
+    """
+    Split input dateframe into groups and preform a rolling average on the metric columns for each group
+    :param data: input dataframe
+    :param groupby_columns: list of columns to group by
+    :param metric_columns: columns to calculate rolling average on
+    :param date_column: name of date column
+    :param window: window size to be used on rolling average
+    :return: modified dask dataframe
+    """
+    data = data.set_index(date_column, sorted=True)
+    output_schema = dict(data.dtypes)
+    for metric_column in metric_columns:
+        output_schema[f'{metric_column}_rolling'] = 'float32'
+    output_schema = list(output_schema.items())
+    data = data.groupby(by=groupby_columns).apply(
+        lambda df_g: rolling_sum_by_date(data=df_g, metric_columns=metric_columns, window=window), meta=output_schema)
+    data = data.reset_index().rename(columns={'index': date_column})
+    return data
+
+def rolling_sum_by_date(data: dd = None, metric_columns: List[str] = None, window: int = None) -> dd:
+    """
+    preform rolling average on a single group
+    :param data:
+    :param metric_columns:
+    :param window:
+    :return:
+    """
+    for metric_column in metric_columns:
+        output_column_name = f'{metric_column}_rolling'
+        data[output_column_name] = data[metric_column].rolling(window=window, min_periods=0).sum().astype('float32')
+    return data
+
 
 def yoy_percent_change_by_group(data: dd = None, groupby_columns: List[str] = None, metric_columns: List[str] = None,
                                 date_column: str = None) -> dd:
@@ -134,8 +168,8 @@ def yoy_percent_change(data: dd = None, metric_columns: List[str] = None) -> dd:
     return data
 
 
-def fill_missing_dates_by_group(data: dd = None, groupby_columns: List[str] = None, fill_method=None,
-                                date_range: Tuple[str] = None, date_column: str = None) -> dd:
+def fill_missing_dates_by_group(data: dd = None, groupby_columns: List[str] = None, fill_method: str = None,
+                                date_range: Tuple[str] = None, date_column: str = None, fill_value=None) -> dd:
     """
     split input dataframe into groups according to groupby columns and reindex with continuous dates with specified 
     date range. Fill missing values according to fill method
@@ -150,18 +184,17 @@ def fill_missing_dates_by_group(data: dd = None, groupby_columns: List[str] = No
     output_schema = list(output_schema.items())
     data = data.groupby(by=groupby_columns).apply(
         lambda df_g: fill_missing_dates(data=df_g, date_column=date_column, fill_method=fill_method,
-                                        date_range=date_range),
+                                        date_range=date_range, fill_value=fill_value),
         meta=output_schema).reset_index(drop=True)
     return data
 
 
 def fill_missing_dates(data: dd = None, date_column: str = None, fill_method: str = None,
-                       date_range: Tuple[str] = None) -> dd:
+                       date_range: Tuple[str] = None, fill_value=None) -> dd:
     """
     Preform date fill on single group
     """
-    # all_dates = data.reset_index().set_index(date_column).resample('D').asfreq().index
     all_dates = pd.date_range(date_range[0], date_range[1])
-    data = data.set_index(date_column).reindex(all_dates, method=fill_method)
+    data = data.set_index(date_column).reindex(all_dates, method=fill_method, fill_value=fill_value)
     data = data.reset_index().rename(columns={'index': date_column})
     return data
